@@ -1,0 +1,29 @@
+kind: ZarfPackageConfig
+metadata:
+  name: zarf-vite-template
+  version: "latest"
+  description: "Zarf Vite Template"
+
+components:
+  - name: zarf-vite-template
+    required: true
+    manifests:
+      - name: zarf-vite-template-manifest
+        namespace: zarf-vite-template
+        files:
+          - ./k8s/deployment.yaml
+          - ./k8s/service.yaml
+          - ./k8s/ingress.yaml
+          - ./k8s/connect-service.yaml
+    images:
+      - localhost:5000/zarf-vite-template:latest
+    actions:
+      onDeploy:
+        after:
+          - cmd: |
+              # Ensure k3d cluster has port 80 mapped from loadbalancer to host port 8080
+              if command -v k3d &> /dev/null; then
+                k3d cluster edit k3s-default --port-add "8080:80@loadbalancer" 2>/dev/null || echo "Port mapping may already exist or cluster not found"
+              else
+                echo "k3d not found, skipping port mapping"
+              fi
